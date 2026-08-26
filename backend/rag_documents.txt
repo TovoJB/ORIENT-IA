@@ -1,0 +1,3 @@
+This knowledge base is for a hackathon medical clinic assistant.
+The clinic offers general consultation, pediatrics, cardiology and dermatology.
+Consultations run from 8h to 18h, Monday to Friday.

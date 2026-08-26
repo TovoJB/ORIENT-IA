@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.pyc
+ml_model.joblib
+.env
+node_modules/
+.next/
+coverage/
+*.tsbuildinfo
+*.db
