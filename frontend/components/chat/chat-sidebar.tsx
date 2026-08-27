@@ -143,8 +143,8 @@ export function ChatSidebar() {
         <DropdownMenu>
           <DropdownMenuTrigger render={
             <Button variant="ghost" className="w-full justify-start gap-2.5 px-2 h-10">
-              <Logo className="size-6" />
-              <span className="font-semibold text-sm">ORIENT&apos;IA</span>
+              <Logo className="size-8" />
+              <span className="bg-gradient-to-r from-emerald-400 via-teal-500 to-green-600 bg-clip-text text-transparent">ORIENT&apos;IA</span>
               <ChevronDownIcon className="size-3 ml-auto" />
             </Button>
           } />
