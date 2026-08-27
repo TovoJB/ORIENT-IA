@@ -52,9 +52,12 @@ export function ChatWelcomeScreen({
         </div>
 
         <div className="space-y-4 text-center">
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Bonjour! Je suis ORIENT&apos;IA
-          </h1>
+          <h1 className="text-3xl font-bold tracking-tight">
+          Bonjour! Je suis{" "}
+          <span className="bg-gradient-to-r from-emerald-400 via-teal-500 to-green-600 bg-clip-text text-transparent">
+            ORIENT&apos;IA
+          </span>
+        </h1>
           <p className="text-2xl text-foreground">
              Votre assistant d'orientation à l'ISPM
           </p>
