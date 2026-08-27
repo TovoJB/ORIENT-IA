@@ -15,11 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-const aiModels = [
-  { id: "gemini", label: "Gemini", icon: SparklesIcon },
-  { id: "gemini-flash", label: "Gemini Flash", icon: SparklesIcon },
-  { id: "gemini-pro", label: "Gemini Pro", icon: SparklesIcon },
-];
+
 
 interface ChatInputBoxProps {
   message: string;
@@ -38,7 +34,7 @@ export function ChatInputBox({
   selectedModel,
   onModelChange,
   showTools = true,
-  placeholder = "Ask anything...",
+  placeholder = "Ecrire ici...",
 }: ChatInputBoxProps) {
   return (
     <div className="rounded-2xl border border-border bg-secondary dark:bg-card p-1">
@@ -81,47 +77,7 @@ export function ChatInputBox({
             )}
           </div>
 
-          {showTools ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger render={
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="gap-2 h-5 px-0 hover:bg-transparent"
-                >
-                  <Logo className="size-6" />
-                  <span className="hidden sm:inline text-sm text-foreground dark:text-muted-foreground">
-                    {aiModels.find((m) => m.id === selectedModel)?.label}
-                  </span>
-                  <ChevronDownIcon className="size-4 text-foreground dark:text-muted-foreground" />
-                </Button>} />
-              <DropdownMenuContent align="end" className="w-56">
-                {aiModels.map((model) => {
-                  const ModelIcon = model.icon;
-                  const isSelected = selectedModel === model.id;
-                  return (
-                    <DropdownMenuItem
-                      key={model.id}
-                      onClick={() => onModelChange(model.id)}
-                      className="gap-2"
-                    >
-                      <ModelIcon className="size-4" />
-                      <span className="flex-1">{model.label}</span>
-                      {isSelected && <CheckIcon className="size-4" />}
-                    </DropdownMenuItem>
-                  );
-                })}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            <Button
-              size="sm"
-              onClick={onSend}
-              className="h-7 px-4"
-            >
-              Send
-            </Button>
-          )}
+          
         </div>
       </div>
     </div>

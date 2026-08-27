@@ -37,6 +37,13 @@ export function ChatWelcomeScreen({
 }: ChatWelcomeScreenProps) {
   return (
     <div className="flex h-full flex-col items-center justify-center px-4 md:px-8">
+      <div className="absolute left-3 top-3 flex items-center gap-2">
+        <img
+          src="/download 1.png"
+          alt="ISPM Logo"
+          className="h-20 w-auto object-contain transition-opacity hover:opacity-80"
+        />
+      </div>
       <div className="w-full max-w-[640px] space-y-9 -mt-12">
         <div className="flex justify-center">
           <div className="flex items-center justify-center size-8 rounded-full">
@@ -46,10 +53,10 @@ export function ChatWelcomeScreen({
 
         <div className="space-y-4 text-center">
           <h1 className="text-2xl font-semibold tracking-tight">
-            Hey! I&apos;m Clinique AI
+            Bonjour! Je suis ORIENT&apos;IA
           </h1>
           <p className="text-2xl text-foreground">
-            Tell me everything you need
+             Votre assistant d'orientation à l'ISPM
           </p>
         </div>
 
@@ -62,29 +69,11 @@ export function ChatWelcomeScreen({
           showTools={true}
         />
 
-        <div className="flex flex-wrap items-center justify-center gap-2">
-          {chatModes.map((mode) => (
-            <Button
-              key={mode.id}
-              variant={selectedMode === mode.id ? "secondary" : "ghost"}
-              className={cn("gap-2", selectedMode === mode.id && "bg-accent")}
-              onClick={() => onModeChange(mode.id)}
-            >
-              <mode.icon className="size-4" />
-              <span>{mode.label}</span>
-              {mode.pro && (
-                <span className="rounded bg-primary/10 px-1.5 py-0.5 text-xs font-medium">
-                  Pro
-                </span>
-              )}
-            </Button>
-          ))}
-        </div>
       </div>
 
       <div className="absolute bottom-6 text-center">
         <p className="text-sm text-muted-foreground">
-          ORIENT&apos;IA est une aide à la décision, pas une décision officielle d&apos;admission. Il peut se tromper : vérifiez les informations importantes.
+          ORIENT&apos;IA est une aide à la décision, développé par Néocoders.
         </p>
       </div>
     </div>
