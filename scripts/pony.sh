@@ -122,7 +122,7 @@ step_install() {
 
 step_train() {
   section "MACHINE LEARNING" "entraînement du modèle"
-  info "RandomForest sur le dataset iris..."
+  info "RandomForest vs LogisticRegression sur les profils ORIENT'IA..."
   ( cd "$BACKEND" && "$PY" -m services.ml_service )
   ok "modèle entraîné et sauvegardé (backend/ml_model.joblib)"
 }
@@ -164,6 +164,14 @@ step_resetdb() {
     info "aucune base à supprimer: $db_path"
   fi
   info "elle sera recréée automatiquement au prochain démarrage (tables + schéma)."
+}
+
+step_eval() {
+  section "ÉVALUATION" "jeu de 34 cas (RAG + ML + LLM)"
+  info "RAG + ML hors-ligne..."
+  ( cd "$BACKEND" && "$PY" -m evaluation.run_evaluation )
+  ok "rapport écrit (evaluation/rapport_evaluation.json)"
+  warn "Ajoutez --llm pour mesurer la fidélité des réponses (appels Gemini, quota)."
 }
 
 CLEANED=0
@@ -212,6 +220,7 @@ Usage: ./scripts/pony.sh [commande]
   install    installe les dépendances
   train      entraîne le modèle ML
   test       lance tous les tests (backend + frontend)
+  eval       lance l'évaluation (RAG + ML ; --llm pour le LLM)
   resetdb    supprime la base SQLite (clinique.db), recréée au prochain démarrage
   run        démarre backend + frontend
   run-api    démarre seulement le backend
@@ -230,6 +239,7 @@ main() {
     install)   step_install ;;
     train)     step_train ;;
     test)      step_test ;;
+    eval)      step_eval ;;
     resetdb)   step_resetdb ;;
     run)       step_run ;;
     run-api)   ( cd "$BACKEND" && "$VENV/bin/uvicorn" main:app --port 8000 --reload ) ;;

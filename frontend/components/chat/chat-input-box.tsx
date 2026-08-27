@@ -25,7 +25,6 @@ interface ChatInputBoxProps {
   message: string;
   onMessageChange: (value: string) => void;
   onSend: () => void;
-  onPredict: () => void;
   selectedModel: string;
   onModelChange: (modelId: string) => void;
   showTools?: boolean;
@@ -36,7 +35,6 @@ export function ChatInputBox({
   message,
   onMessageChange,
   onSend,
-  onPredict,
   selectedModel,
   onModelChange,
   showTools = true,
@@ -76,18 +74,7 @@ export function ChatInputBox({
                 >
                   <CircleDashedIcon className="size-4 text-muted-foreground" />
                   <span className="hidden sm:inline text-sm text-muted-foreground/70">
-                    Deep Search
-                  </span>
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="gap-1.5 h-7 rounded-full border border-border dark:border-input bg-card dark:bg-secondary hover:bg-accent px-3"
-                  onClick={onPredict}
-                >
-                  <SparklesIcon className="size-4 text-muted-foreground" />
-                  <span className="hidden sm:inline text-sm text-muted-foreground/70">
-                    ML Predict
+                    Orientation guidée
                   </span>
                 </Button>
               </>

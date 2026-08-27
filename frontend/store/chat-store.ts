@@ -1,23 +1,41 @@
 import { create } from "zustand";
 import { mockChats, type Chat, type Message } from "@/mock-data/chats";
 
+export interface TranscriptMessage {
+  id: string;
+  content: string;
+  sender: "user" | "ai";
+  timestamp: Date;
+}
+
 interface ChatState {
   chats: Chat[];
   selectedChatId: string | null;
+  currentProfile: Record<string, string>;
+  currentTranscript: TranscriptMessage[];
   selectChat: (chatId: string) => void;
   addMessage: (chatId: string, message: Omit<Message, "id" | "timestamp">) => void;
   createNewChat: () => void;
   archiveChat: (chatId: string) => void;
   unarchiveChat: (chatId: string) => void;
   deleteChat: (chatId: string) => void;
+  setCurrentProfile: (profile: Record<string, string>) => void;
+  setCurrentTranscript: (messages: TranscriptMessage[]) => void;
+  resetLiveSession: () => void;
 }
 
 export const useChatStore = create<ChatState>((set) => ({
   chats: mockChats,
   selectedChatId: null,
-  
+  currentProfile: {},
+  currentTranscript: [],
+
   selectChat: (chatId) => set({ selectedChatId: chatId }),
-  
+
+  setCurrentProfile: (profile) => set({ currentProfile: profile }),
+  setCurrentTranscript: (messages) => set({ currentTranscript: messages }),
+  resetLiveSession: () => set({ currentProfile: {}, currentTranscript: [] }),
+
   addMessage: (chatId, message) =>
     set((state) => ({
       chats: state.chats.map((chat) =>

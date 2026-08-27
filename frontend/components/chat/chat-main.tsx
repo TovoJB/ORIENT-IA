@@ -1,9 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ChatWelcomeScreen } from "./chat-welcome-screen";
 import { ChatConversationView } from "./chat-conversation-view";
-import { sendChatMessage, sendPrediction } from "@/lib/api";
+import { useChatStore } from "@/store/chat-store";
+import {
+  sendChatTurn,
+  type Question,
+  type RecommendationResult,
+} from "@/lib/api";
 
 interface Message {
   id: string;
@@ -20,6 +25,27 @@ export function ChatMain() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [pendingQuestion, setPendingQuestion] = useState<Question | null>(null);
+  const [selection, setSelection] = useState<string[]>([]);
+  const [recommendation, setRecommendation] = useState<RecommendationResult | null>(null);
+  const [profils, setProfils] = useState<Record<string, string>>({});
+
+  // Synchronise profil + transcript vers le store (panneau gauche).
+  const setCurrentProfile = useChatStore((s) => s.setCurrentProfile);
+  const setCurrentTranscript = useChatStore((s) => s.setCurrentTranscript);
+  const resetLiveSession = useChatStore((s) => s.resetLiveSession);
+
+  useEffect(() => {
+    setCurrentTranscript(messages);
+  }, [messages, setCurrentTranscript]);
+
+  useEffect(() => {
+    if (conversationId) setCurrentProfile(profils);
+  }, [conversationId, profils, setCurrentProfile]);
+
+  const inputDisabled = isLoading || (pendingQuestion !== null && recommendation === null);
+
   const appendMessage = (content: string, sender: "user" | "ai") => {
     setMessages((prev) => [
       ...prev,
@@ -32,16 +58,27 @@ export function ChatMain() {
     ]);
   };
 
+  const optionLabel = (value: string): string => {
+    const option = pendingQuestion?.options.find((o) => o.value === value);
+    return option ? option.label : value;
+  };
+
+  const applyTurn = (data: Awaited<ReturnType<typeof sendChatTurn>>) => {
+    appendMessage(data.reply, "ai");
+    setConversationId(data.conversation_id);
+    setPendingQuestion(data.question);
+    setRecommendation(data.recommendation);
+    setSelection([]);
+    if (data.profil) setProfils(data.profil);
+  };
+
   const send = async (content: string) => {
     if (!content.trim() || isLoading) return;
-
     appendMessage(content, "user");
     setMessage("");
     setIsLoading(true);
-
     try {
-      const reply = await sendChatMessage(content);
-      appendMessage(reply, "ai");
+      applyTurn(await sendChatTurn({ message: content, conversationId: conversationId ?? undefined }));
     } catch (error) {
       appendMessage(`Erreur: ${(error as Error).message}`, "ai");
     } finally {
@@ -55,30 +92,52 @@ export function ChatMain() {
     send(message);
   };
 
-  const handlePredict = async () => {
-    if (isLoading) return;
-    setIsLoading(true);
+  const handleAnswer = async (explicitValue?: string[]) => {
+    if (!pendingQuestion || isLoading) return;
+    // Un éventuel argument non-tableau (ex: un événement de clic) est ignoré.
+    const valeur = Array.isArray(explicitValue) ? explicitValue : selection;
+    if (valeur.length === 0) return;
 
+    appendMessage(
+      valeur.map(optionLabel).join(", "),
+      "user"
+    );
+    setSelection([]);
+    setIsLoading(true);
     try {
-      const result = await sendPrediction([5.1, 3.5, 1.4, 0.2]);
-      const text = [
-        `ML prediction: ${result.class_name}`,
-        `Probabilities: ${result.probabilities
-          .map((p) => `${(p * 100).toFixed(1)}%`)
-          .join(", ")}`,
-      ].join("\n");
-      appendMessage(text, "ai");
+      applyTurn(
+        await sendChatTurn({
+          answer: { champ: pendingQuestion.champ, valeur },
+          conversationId: conversationId ?? undefined,
+        })
+      );
     } catch (error) {
-      appendMessage(`Erreur ML: ${(error as Error).message}`, "ai");
+      appendMessage(`Erreur: ${(error as Error).message}`, "ai");
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const toggleOption = (value: string) => {
+    setSelection((prev) =>
+      prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
+    );
+  };
+
+  const selectSingle = (value: string) => {
+    handleAnswer([value]);
   };
 
   const handleReset = () => {
     setIsConversationStarted(false);
     setMessages([]);
     setMessage("");
+    setConversationId(null);
+    setPendingQuestion(null);
+    setRecommendation(null);
+    setSelection([]);
+    setProfils({});
+    resetLiveSession();
   };
 
   if (isConversationStarted) {
@@ -87,10 +146,16 @@ export function ChatMain() {
         messages={messages}
         message={message}
         isLoading={isLoading}
+        pendingQuestion={pendingQuestion}
+        selection={selection}
+        recommendation={recommendation}
+        inputDisabled={inputDisabled}
         onMessageChange={setMessage}
         onSend={send}
         onReset={handleReset}
-        onPredict={handlePredict}
+        onSelectOption={toggleOption}
+        onSingleSelect={selectSingle}
+        onValidateAnswer={handleAnswer}
       />
     );
   }
@@ -100,7 +165,6 @@ export function ChatMain() {
       message={message}
       onMessageChange={setMessage}
       onSend={handleFirstSend}
-      onPredict={handlePredict}
       selectedMode={selectedMode}
       onModeChange={setSelectedMode}
       selectedModel={selectedModel}

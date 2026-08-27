@@ -10,6 +10,7 @@ Le plus simple pour tout lancer (vérification, installation, tests, serveurs) :
 ./scripts/pony.sh        # Linux / macOS
 .\pony.cmd               # Windows (ou .\scripts\pony.ps1)
 ./pony test              # lance tous les tests
+./pony eval              # évaluation 34 cas (RAG + ML ; --llm pour le LLM)
 ./pony resetdb           # supprime la base SQLite (clinique.db)
 ./pony run               # démarre backend + frontend
 ```

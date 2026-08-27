@@ -128,7 +128,7 @@ function Step-Install {
 
 function Step-Train {
     Section "MACHINE LEARNING" "entraînement du modèle"
-    Info "RandomForest sur le dataset iris..."
+    Info "RandomForest vs LogisticRegression sur les profils ORIENT'IA..."
     Push-Location $BACKEND
     try { & $PY -m services.ml_service }
     finally { Pop-Location }
@@ -161,6 +161,16 @@ function Step-Test {
     try { npm run build | Out-Null } finally { Pop-Location }
     if ($LASTEXITCODE -ne 0) { Fail "build frontend en erreur" }
     Ok "build frontend OK"
+}
+
+
+function Step-Eval {
+    Section "ÉVALUATION" "jeu de 34 cas (RAG + ML + LLM)"
+    Info "RAG + ML hors-ligne..."
+    Push-Location $BACKEND
+    try { & $PY -m evaluation.run_evaluation } finally { Pop-Location }
+    Ok "rapport écrit (evaluation\rapport_evaluation.json)"
+    Warn "Ajoutez --llm pour mesurer la fidélité des réponses (appels Gemini, quota)."
 }
 
 function Step-ResetDb {
@@ -225,6 +235,7 @@ function Show-Help {
     Write-Output "  install    installe les dépendances"
     Write-Output "  train      entraîne le modèle ML"
     Write-Output "  test       lance tous les tests (backend + frontend)"
+    Write-Output "  eval       lance l'évaluation (RAG + ML ; --llm pour le LLM)"
     Write-Output "  resetdb    supprime la base SQLite (clinique.db), recréée au prochain démarrage"
     Write-Output "  run        démarre backend + frontend"
     Write-Output "  run-api    démarre seulement le backend"
@@ -247,6 +258,7 @@ switch ($cmd) {
     "install" { Step-Install }
     "train"   { Step-Train }
     "test"    { Step-Test }
+    "eval"    { Step-Eval }
     "resetdb" { Step-ResetDb }
     "run"     { Step-Run }
     "run-api" {

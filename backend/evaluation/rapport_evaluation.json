@@ -1,0 +1,280 @@
+{
+  "jeu": "Jeu d'évaluation ORIENT'IA (32 cas minimum, exigence du sujet). Chaque cas indique sa catégorie, la question posée au système, les documents attendus (RAG), la recommandation ML attendue, et les mots-clés de refus le cas échéant.",
+  "nb_cas": 34,
+  "repartition": {
+    "factuelles": 7,
+    "comparaisons": 4,
+    "recommandations_ml": 5,
+    "multi_sources": 4,
+    "infos_absentes": 4,
+    "ambiguës": 3,
+    "securite_injection": 3,
+    "biais": 2,
+    "refus_profilage": 2
+  },
+  "rag": {
+    "precision_hit1": 0.6667,
+    "precision_hit3": 1.0,
+    "cas_evalues": 15,
+    "details": [
+      {
+        "id": "f1",
+        "attendu": [
+          "parcours_informatique"
+        ],
+        "trouve_top1": "parcours_informatique",
+        "trouve_top3": [
+          "admission_prerequis",
+          "parcours_informatique"
+        ],
+        "ok_hit3": true
+      },
+      {
+        "id": "f2",
+        "attendu": [
+          "parcours_informatique"
+        ],
+        "trouve_top1": "parcours_informatique",
+        "trouve_top3": [
+          "parcours_genie",
+          "parcours_informatique"
+        ],
+        "ok_hit3": true
+      },
+      {
+        "id": "f3",
+        "attendu": [
+          "parcours_affaires"
+        ],
+        "trouve_top1": "admission_prerequis",
+        "trouve_top3": [
+          "admission_prerequis",
+          "parcours_affaires"
+        ],
+        "ok_hit3": true
+      },
+      {
+        "id": "f4",
+        "attendu": [
+          "parcours_tourisme"
+        ],
+        "trouve_top1": "admission_prerequis",
+        "trouve_top3": [
+          "admission_prerequis",
+          "parcours_tourisme"
+        ],
+        "ok_hit3": true
+      },
+      {
+        "id": "f5",
+        "attendu": [
+          "parcours_genie"
+        ],
+        "trouve_top1": "parcours_genie",
+        "trouve_top3": [
+          "admission_prerequis",
+          "parcours_genie"
+        ],
+        "ok_hit3": true
+      },
+      {
+        "id": "f6",
+        "attendu": [
+          "admission_prerequis"
+        ],
+        "trouve_top1": "parcours_informatique",
+        "trouve_top3": [
+          "admission_prerequis",
+          "parcours_informatique"
+        ],
+        "ok_hit3": true
+      },
+      {
+        "id": "c1",
+        "attendu": [
+          "parcours_informatique"
+        ],
+        "trouve_top1": "admission_prerequis",
+        "trouve_top3": [
+          "admission_prerequis",
+          "parcours_informatique"
+        ],
+        "ok_hit3": true
+      },
+      {
+        "id": "c2",
+        "attendu": [
+          "parcours_affaires"
+        ],
+        "trouve_top1": "admission_prerequis",
+        "trouve_top3": [
+          "admission_prerequis",
+          "parcours_affaires"
+        ],
+        "ok_hit3": true
+      },
+      {
+        "id": "c3",
+        "attendu": [
+          "parcours_biotech"
+        ],
+        "trouve_top1": "parcours_biotech",
+        "trouve_top3": [
+          "parcours_biotech",
+          "parcours_tourisme"
+        ],
+        "ok_hit3": true
+      },
+      {
+        "id": "c4",
+        "attendu": [
+          "parcours_genie"
+        ],
+        "trouve_top1": "parcours_genie",
+        "trouve_top3": [
+          "admission_prerequis",
+          "parcours_genie"
+        ],
+        "ok_hit3": true
+      },
+      {
+        "id": "m1",
+        "attendu": [
+          "admission_prerequis",
+          "parcours_informatique"
+        ],
+        "trouve_top1": "parcours_informatique",
+        "trouve_top3": [
+          "admission_prerequis",
+          "parcours_informatique"
+        ],
+        "ok_hit3": true
+      },
+      {
+        "id": "m2",
+        "attendu": [
+          "admission_prerequis",
+          "parcours_informatique"
+        ],
+        "trouve_top1": "admission_prerequis",
+        "trouve_top3": [
+          "admission_prerequis",
+          "parcours_informatique"
+        ],
+        "ok_hit3": true
+      },
+      {
+        "id": "m3",
+        "attendu": [
+          "admission_prerequis",
+          "parcours_affaires"
+        ],
+        "trouve_top1": "admission_prerequis",
+        "trouve_top3": [
+          "admission_prerequis",
+          "parcours_affaires"
+        ],
+        "ok_hit3": true
+      },
+      {
+        "id": "m4",
+        "attendu": [
+          "admission_prerequis",
+          "parcours_tourisme"
+        ],
+        "trouve_top1": "parcours_tourisme",
+        "trouve_top3": [
+          "admission_prerequis",
+          "parcours_tourisme"
+        ],
+        "ok_hit3": true
+      },
+      {
+        "id": "d1",
+        "attendu": [
+          "admission_prerequis"
+        ],
+        "trouve_top1": "admission_prerequis",
+        "trouve_top3": [
+          "admission_prerequis"
+        ],
+        "ok_hit3": true
+      }
+    ]
+  },
+  "ml": {
+    "precision_1": 1.0,
+    "cas_evalues": 5,
+    "details": [
+      {
+        "id": "r1",
+        "attendu": "isaia",
+        "prediction": "isaia",
+        "ok": true
+      },
+      {
+        "id": "r2",
+        "attendu": "emii",
+        "prediction": "emii",
+        "ok": true
+      },
+      {
+        "id": "r3",
+        "attendu": "caa",
+        "prediction": "caa",
+        "ok": true
+      },
+      {
+        "id": "r4",
+        "attendu": "iggia",
+        "prediction": "iggia",
+        "ok": true
+      },
+      {
+        "id": "r5",
+        "attendu": "aee",
+        "prediction": "aee",
+        "ok": true
+      }
+    ],
+    "metriques_modele": {
+      "message": "Modèle entraîné et sauvegardé.",
+      "model_choisi": "rf",
+      "n_samples": 400,
+      "classes": [
+        "aee",
+        "caa",
+        "dtja",
+        "emii",
+        "emp",
+        "esii",
+        "fic",
+        "gca",
+        "iaa",
+        "icmp",
+        "iggia",
+        "imticia",
+        "isaia",
+        "pip",
+        "tee",
+        "teh"
+      ],
+      "metriques": {
+        "baseline": {
+          "accuracy": 0.1,
+          "log_loss": 32.4393
+        },
+        "rf": {
+          "accuracy": 0.8625,
+          "log_loss": 0.5252
+        },
+        "lr": {
+          "accuracy": 0.85,
+          "log_loss": 0.4595
+        }
+      },
+      "model_path": "ml_model.joblib"
+    }
+  },
+  "llm": null
+}

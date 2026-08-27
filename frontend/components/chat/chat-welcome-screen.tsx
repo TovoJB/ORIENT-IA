@@ -20,7 +20,6 @@ interface ChatWelcomeScreenProps {
   message: string;
   onMessageChange: (value: string) => void;
   onSend: () => void;
-  onPredict: () => void;
   selectedMode: string;
   onModeChange: (modeId: string) => void;
   selectedModel: string;
@@ -31,7 +30,6 @@ export function ChatWelcomeScreen({
   message,
   onMessageChange,
   onSend,
-  onPredict,
   selectedMode,
   onModeChange,
   selectedModel,
@@ -59,7 +57,6 @@ export function ChatWelcomeScreen({
           message={message}
           onMessageChange={onMessageChange}
           onSend={onSend}
-          onPredict={onPredict}
           selectedModel={selectedModel}
           onModelChange={onModelChange}
           showTools={true}
@@ -87,7 +84,7 @@ export function ChatWelcomeScreen({
 
       <div className="absolute bottom-6 text-center">
         <p className="text-sm text-muted-foreground">
-          Clinique AI can make mistakes. Check important info.
+          ORIENT&apos;IA est une aide à la décision, pas une décision officielle d&apos;admission. Il peut se tromper : vérifiez les informations importantes.
         </p>
       </div>
     </div>

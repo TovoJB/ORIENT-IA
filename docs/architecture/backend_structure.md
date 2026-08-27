@@ -29,26 +29,41 @@ backend/
 ├── requirements.txt              # liste des dépendances Python
 ├── conftest.py                   # prépare l'environnement des tests
 ├── tests/                        # les tests pytest
-│   ├── test_api.py
-│   ├── test_ml_service.py
-│   ├── test_llm_service.py
-│   ├── test_rag_service.py
-│   └── test_sqlite_repository.py
+│   ├── test_api.py               #   /health, /orienter, /predict, /traces...
+│   ├── test_ml_service.py        #   train/predict, features, seuil de données
+│   ├── test_prolog_service.py    #   règles, parcours possibles, prérequis
+│   ├── test_orientation_service.py  # hybridation + explication
+│   ├── test_chat_service.py      #   outils de l'agent, refus sans clé
+│   ├── test_rag_service.py       #   corpus + citations
+│   ├── test_llm_service.py       #   gestion d'erreur Gemini
+│   └── test_sqlite_repository.py #   persistance
 ├── api/                          # ÉTAGE 1 : la salle du restaurant
-│   ├── routes.py                 #   définit les routes : /chat, /predict
+│   ├── routes.py                 #   /chat /predict /orienter /comparer /prerequis /sources /traces /moteurs
 │   └── schemas.py                #   vérifie ce que le client envoie/reçoit
 ├── services/                     # ÉTAGE 2 : la cuisine
+│   ├── chat_service.py           #   l'agent (Gemini + outils + refus)
+│   ├── orientation_service.py    #   hybridation Prolog → ML → fusion 60/40
+│   ├── prolog_service.py         #   moteur de règles (pyswip + fallback)
+│   ├── rules_fallback.py         #   miroir Python des règles Prolog
+│   ├── ml_service.py             #   entraîne (RF + LR) / prédit
+│   ├── ml_features.py            #   profil → vecteur de features
+│   ├── rag_service.py            #   RAG : embeddings + base vectorielle + citations
 │   ├── llm_service.py            #   appelle Google Gemini
-│   ├── ml_service.py             #   entraîne/prédit avec scikit-learn
-│   └── rag_service.py            #   recherche dans une base de textes
+│   ├── profiles.py               #   profil de session (construit au fil du dialogue)
+│   └── traces.py                 #   observabilité (chaque étape journalisée)
+├── knowledge_base/               # la base de règles Prolog
+│   └── orientia_rules.pl
 ├── domain/                       # ÉTAGE 4 : les définitions de données
 │   └── entities.py               #   Message, Conversation, PredictionResult
 ├── repositories/                 # ÉTAGE 3 : le garde-manger
-│   ├── base.py                   #   le "contrat" (toutes les implémentations l'respectent)
-│   ├── sqlite_repository.py      #   stockage DANS UNE VRAIE BASE SQLite (clinique.db)
-│   ├── in_memory_repository.py   #   stockage en mémoire (alternative)
+│   ├── base.py                   #   le "contrat"
+│   ├── sqlite_repository.py      #   stockage SQLite (clinique.db)
+│   ├── in_memory_repository.py   #   alternative en mémoire
 │   └── conversation_repository.py#   choisit l'implémentation selon la config
-├── evaluation/                   # petit script de test manuel du LLM
+├── evaluation/                   # évaluation exigée par le sujet
+│   ├── test_suite.json           #   34 cas catégorisés
+│   └── run_evaluation.py         #   mesures RAG / ML / fidélité LLM
+├── notebooks/                    # livrables ML (exploration, comparaison, biais)
 └── utils/                        # petites fonctions réutilisables
 ```
 
