@@ -11,6 +11,7 @@ export interface RecommendationItem {
     competences: string[];
     interets: string[];
     metier_alignee: boolean;
+    suggestions?: string[];
   };
   description: string;
 }

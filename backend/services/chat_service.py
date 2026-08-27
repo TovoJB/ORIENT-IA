@@ -252,17 +252,33 @@ def _outil_verifier_prerequis(args: dict, session_id: str) -> dict:
     }
 
 
+# Valeurs numériques encodées pour les notes (sur 20, 4 seuils)
+_NOTE_VALEURS = {"6", "10", "14", "17"}
+
 # Valeurs autorisées pour les champs à choix fermés
 _VALEURS_VALIDES: dict[str, set] = {
     "serie_bac": {"c", "d", "s", "a1", "a2", "l", "ose", "autre"},
     "moyenne_generale": {"1", "2", "3", "4", "5"},
     "environnement": {"bureau", "relationnel", "recherche", "terrain", "laboratoire"},
+    # Notes par série (mêmes seuils pour toutes)
+    "note_mathematiques": _NOTE_VALEURS,
+    "note_spc":           _NOTE_VALEURS,
+    "note_svt":           _NOTE_VALEURS,
+    "note_malagasy":      _NOTE_VALEURS,
+    "note_francais":      _NOTE_VALEURS,
+    "note_philosophie":   _NOTE_VALEURS,
+    "note_ses":           _NOTE_VALEURS,
+    "note_hg":            _NOTE_VALEURS,
 }
 
 
 def _outil_enregistrer_profil(args: dict, session_id: str) -> dict:
     champ = str(args.get("champ", "")).strip()
     valeur = args.get("valeur")
+
+    # Extraire le premier élément si c'est une liste
+    if isinstance(valeur, list) and len(valeur) > 0:
+        valeur = valeur[0]
 
     # Validation : si le champ a des valeurs autorisées, rejeter les valeurs hors liste
     if champ in _VALEURS_VALIDES:

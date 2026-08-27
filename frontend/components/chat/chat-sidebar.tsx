@@ -78,9 +78,17 @@ function buildProfileRows(profile: Record<string, string>): { label: string; val
   const moyenne = profile.moyenne_generale;
   if (moyenne) rows.push({ label: "Moyenne générale", value: MOYENNE_LABELS[moyenne] ?? moyenne });
 
-  if (profile.note_mathematiques) {
-    rows.push({ label: "Note en maths", value: `${profile.note_mathematiques}/20` });
-  }
+  const NOTE_LABELS: Record<string, string> = {
+    note_mathematiques: "Note en maths", note_spc: "Note en SPC",
+    note_svt: "Note en SVT", note_francais: "Note en français",
+    note_malagasy: "Note en malagasy", note_langue_vivante: "Note en LV",
+    note_hg: "Note en histoire-géo", note_philosophie: "Note en philosophie",
+    note_ses: "Note en SES",
+  };
+  const notes = Object.entries(profile)
+    .filter(([key]) => key.startsWith("note_") && profile[key])
+    .map(([key]) => ({ label: NOTE_LABELS[key] ?? key, value: `${profile[key]}/20` }));
+  if (notes.length) rows.push({ label: "Notes au bac", value: notes.map((n) => `${n.label}: ${n.value}`).join(" · ") });
 
   const metier = profile.metier_vise;
   if (metier) {

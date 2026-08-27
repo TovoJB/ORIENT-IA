@@ -11,7 +11,7 @@ après la recommandation (explications, comparaisons...).
 """
 
 from services import orientation_service, profiles
-from services.rules_fallback import PARCOURS_DATA
+from services.rules_fallback import PARCOURS_DATA, famille_bac
 
 # Options de métier : union des débouchés des 16 parcours
 METIERS = sorted({m for data in PARCOURS_DATA.values() for m in data["metiers"]})
@@ -38,17 +38,6 @@ QUESTIONS: list[dict] = [
             {"label": "12 à 14", "value": "3"},
             {"label": "14 à 16", "value": "4"},
             {"label": "16 à 20", "value": "5"},
-        ],
-    },
-    {
-        "champ": "note_mathematiques",
-        "question": "Vos résultats approximatifs en mathématiques (sur 20) ?",
-        "multiple": False,
-        "options": [
-            {"label": "0 à 8", "value": "6"},
-            {"label": "8 à 12", "value": "10"},
-            {"label": "12 à 16", "value": "14"},
-            {"label": "16 à 20", "value": "17"},
         ],
     },
     {
@@ -138,42 +127,99 @@ QUESTIONS: list[dict] = [
 ]
 
 # champs à choix unique qui doivent être renseignés pour considérer le profil complet
-SINGLE_CHAMPS = ["serie_bac", "moyenne_generale", "note_mathematiques", "metier_vise", "environnement"]
+SINGLE_CHAMPS = ["serie_bac", "moyenne_generale", "metier_vise", "environnement"]
 
-# correspondance option -> colonne CSV / champ de profil
-MATIERE_MAP = {
-    "mathematiques": "matiere_mathematiques", "physique": "matiere_physique",
-    "informatique": "matiere_informatique", "svt": "matiere_svt",
-    "francais": "matiere_francais", "malagasy": "matiere_malagasy",
-    "hg": "matiere_hg", "ses": "matiere_ses", "arts": "matiere_arts",
+# Options de note (mêmes seuils que l'ancienne question de maths)
+NOTE_OPTIONS = [
+    {"label": "0 à 8", "value": "6"},
+    {"label": "8 à 12", "value": "10"},
+    {"label": "12 à 16", "value": "14"},
+    {"label": "16 à 20", "value": "17"},
+]
+
+# Les 3 matières de base par famille de bac (notes /20 demandées dans le chat)
+MATIERES_BASE_PAR_FAMILLE: dict[str, list[tuple[str, str]]] = {
+    "scientifique": [
+        ("note_mathematiques", "en mathématiques"),
+        ("note_spc", "en physique-chimie (SPC)"),
+        ("note_svt", "en SVT / biologie"),
+    ],
+    "litteraire": [
+        ("note_malagasy", "en malagasy"),
+        ("note_francais", "en français"),
+        ("note_philosophie", "en philosophie"),
+    ],
+    "economique": [
+        ("note_ses", "en SES / économie"),
+        ("note_mathematiques", "en mathématiques"),
+        ("note_hg", "en histoire-géo"),
+    ],
 }
-COMPETENCE_MAP = {
-    "logique": "competence_logique", "programmation": "competence_programmation",
-    "expression": "competence_expression", "manuelle": "competence_manuelle",
-    "relationnelle": "competence_relationnelle", "creativite": "competence_creativite",
-    "organisation": "competence_organisation", "esprit_critique": "competence_esprit_critique",
+
+NOTE_LABELS: dict[str, str] = {
+    "note_mathematiques": "Mathématiques", "note_spc": "Physique-Chimie (SPC)",
+    "note_svt": "SVT / Biologie", "note_francais": "Français",
+    "note_malagasy": "Malagasy", "note_langue_vivante": "Langue vivante",
+    "note_hg": "Histoire-Géo", "note_philosophie": "Philosophie",
+    "note_ses": "SES / Économie",
 }
-INTERET_MAP = {
-    "technologie": "interet_technologie", "science": "interet_science",
-    "art": "interet_art", "sante": "interet_sante",
-    "entrepreneuriat": "interet_entrepreneuriat", "environnement": "interet_environnement",
-    "social": "interet_social", "sport": "interet_sport",
+
+_SERIE_TO_FAMILLE: dict[str, str] = {
+    "c": "scientifique", "d": "scientifique", "s": "scientifique",
+    "a1": "litteraire",  "a2": "litteraire",  "l": "litteraire",
+    "ose": "economique",
 }
-PREREQUIS_MAP = {
-    "bases_algo": "prerequis_bases_algo",
-    "anglais": "prerequis_anglais",
-    "maths_avancees": "prerequis_maths_avancees",
-}
+
+
+def _famille_from_serie(serie: str | None) -> str | None:
+    """Retourne la famille de bac (scientifique/litteraire/economique) à partir de la série."""
+    if not serie:
+        return None
+    return _SERIE_TO_FAMILLE.get(str(serie).lower().strip())
+
+
+def _question_note(champ: str, sujet: str) -> dict:
+    """Construit la question à choix multiples pour une note (sur 20)."""
+    return {
+        "champ": champ,
+        "question": f"Vos résultats approximatifs {sujet} (sur 20) ?",
+        "multiple": False,
+        "options": NOTE_OPTIONS,
+    }
+
+
+def questions_notes(profil: dict) -> list[dict]:
+    """Questions sur les notes des 3 matières de base de la série choisie.
+
+    Sans série connue (ou série "autre"), aucune question de note n'est posée :
+    le modèle gère les notes absentes (NaN + indicateurs *_presente).
+    """
+    famille = _famille_from_serie(profil.get("serie_bac"))
+    return [
+        _question_note(champ, sujet)
+        for champ, sujet in MATIERES_BASE_PAR_FAMILLE.get(famille or "", [])
+    ]
+
+
+def questions_pour(profil: dict) -> list[dict]:
+    """Questions ordonnées pour ce profil : série, moyenne, les 3 notes de base
+    de la série, puis le reste du formulaire."""
+    return QUESTIONS[:2] + questions_notes(profil) + QUESTIONS[2:]
 
 
 def trouver_question(champ: str) -> dict | None:
-    """Renvoie la question prédéfinie associée à un champ (pour poser_question)."""
-    return next((q for q in QUESTIONS if q["champ"] == champ), None)
+    """Renvoie la question associée à un champ (prédéfinie ou note dynamique)."""
+    q = next((question for question in QUESTIONS if question["champ"] == champ), None)
+    if q:
+        return q
+    if champ.startswith("note_") and champ in NOTE_LABELS:
+        return _question_note(champ, f"en {NOTE_LABELS[champ].lower()}")
+    return None
 
 
 def prochaine_question(profil: dict) -> dict | None:
     """Renvoie la première question encore sans réponse (avec ses options)."""
-    for question in QUESTIONS:
+    for question in questions_pour(profil):
         champ = question["champ"]
         if question["multiple"]:
             prefix = {"matieres": "matiere", "competences": "competence",
@@ -204,15 +250,43 @@ def appliquer_reponse(profil: dict, champ: str, valeur) -> dict:
             if col:
                 profil[col] = "1"
     else:
+        # Extraire la première valeur si c'est une liste (le frontend envoie des tableaux)
+        single_val = valeur[0] if isinstance(valeur, list) and len(valeur) > 0 else valeur
+        single_val = str(single_val) if single_val is not None else ""
         if champ == "serie_bac":
-            profil["serie_bac"] = str(valeur)
-        elif champ in {"moyenne_generale", "note_mathematiques"}:
-            profil[champ] = str(valeur)
+            profil["serie_bac"] = single_val
+        elif champ == "moyenne_generale" or champ.startswith("note_"):
+            profil[champ] = single_val
         elif champ == "environnement":
-            profil["environnement"] = str(valeur)
+            profil["environnement"] = single_val
         elif champ == "metier_vise":
-            profil["metier_vise"] = str(valeur)
+            profil["metier_vise"] = single_val
     return profil
+
+# correspondance option -> colonne CSV / champ de profil
+MATIERE_MAP = {
+    "mathematiques": "matiere_mathematiques", "physique": "matiere_physique",
+    "informatique": "matiere_informatique", "svt": "matiere_svt",
+    "francais": "matiere_francais", "malagasy": "matiere_malagasy",
+    "hg": "matiere_hg", "ses": "matiere_ses", "arts": "matiere_arts",
+}
+COMPETENCE_MAP = {
+    "logique": "competence_logique", "programmation": "competence_programmation",
+    "expression": "competence_expression", "manuelle": "competence_manuelle",
+    "relationnelle": "competence_relationnelle", "creativite": "competence_creativite",
+    "organisation": "competence_organisation", "esprit_critique": "competence_esprit_critique",
+}
+INTERET_MAP = {
+    "technologie": "interet_technologie", "science": "interet_science",
+    "art": "interet_art", "sante": "interet_sante",
+    "entrepreneuriat": "interet_entrepreneuriat", "environnement": "interet_environnement",
+    "social": "interet_social", "sport": "interet_sport",
+}
+PREREQUIS_MAP = {
+    "bases_algo": "prerequis_bases_algo",
+    "anglais": "prerequis_anglais",
+    "maths_avancees": "prerequis_maths_avancees",
+}
 
 
 def question_payload(question: dict) -> dict:
@@ -228,7 +302,6 @@ def question_payload(question: dict) -> dict:
 ACK = {
     "serie_bac": "Bien reçu pour votre série.",
     "moyenne_generale": "Je note votre moyenne.",
-    "note_mathematiques": "C'est pris en compte.",
     "matieres": "Très bien, vos matières préférées sont notées.",
     "competences": "Merci, vos compétences sont enregistrées.",
     "interets": "Vos centres d'intérêt sont bien notés.",
@@ -253,6 +326,8 @@ def reponse_predictive(profil: dict, champ_repondu: str | None = None) -> dict:
     if next_question is not None:
         if champ_repondu is None:
             reply = WELCOME_MESSAGE
+        elif champ_repondu.startswith("note_"):
+            reply = "C'est noté pour cette matière."
         else:
             reply = ACK.get(champ_repondu, "C'est noté !")
         return {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ChevronDownIcon,
   ChevronRightIcon,
@@ -20,9 +20,11 @@ import {
 } from "@/components/prolog/profile-form";
 import { RfResultsPanel } from "./rf-results-panel";
 import {
+  coreNotesForSerie,
   emptyNotes,
   NotesSlider,
   notesToProfile,
+  serieLabelFor,
   type NotesState,
 } from "./notes-slider";
 
@@ -33,6 +35,28 @@ export function RfExplorer() {
   const [result, setResult] = useState<RfExploreResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Renseigne automatiquement les 3 matières de base dès qu'une série est choisie
+  const serie = String(form.serie_bac ?? "").toLowerCase();
+  const coreColumns = coreNotesForSerie(serie);
+  const serieLabel = serieLabelFor(serie);
+  const lastSerieRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!serie || serie === lastSerieRef.current) return;
+    lastSerieRef.current = serie;
+    const core = coreNotesForSerie(serie);
+    setNotes((prev) => {
+      const next = { ...prev };
+      let changed = false;
+      for (const col of core) {
+        if (next[col] === null) {
+          next[col] = 10;
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+  }, [serie]);
 
   const evaluate = useCallback(async (profil: Record<string, string>) => {
     setLoading(true);
@@ -125,6 +149,7 @@ export function RfExplorer() {
               onClick={() => {
                 setForm(emptyForm());
                 setNotes(emptyNotes());
+                lastSerieRef.current = null;
               }}
               title="Réinitialiser le profil"
             >
@@ -134,7 +159,12 @@ export function RfExplorer() {
 
           {profilOpen && (
             <div className="mt-3 space-y-5 overflow-y-auto lg:max-h-[calc(100vh-330px)] pr-1.5 no-scrollbar">
-              <NotesSlider notes={notes} onChange={setNotes} />
+              <NotesSlider
+                notes={notes}
+                onChange={setNotes}
+                coreColumns={coreColumns}
+                serieLabel={serieLabel}
+              />
               <div className="border-t border-border/60 pt-4">
                 <PrologForm
                   form={form}

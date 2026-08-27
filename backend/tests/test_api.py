@@ -219,6 +219,8 @@ def test_chat_complet_recommande_sans_gemini():
         ("serie_bac", "s"),
         ("moyenne_generale", "4"),
         ("note_mathematiques", "17"),
+        ("note_spc", "15"),
+        ("note_svt", "16"),
         ("matieres", ["mathematiques", "informatique"]),
         ("competences", ["programmation", "logique"]),
         ("interets", ["technologie", "science"]),

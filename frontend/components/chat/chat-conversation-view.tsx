@@ -1,10 +1,11 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { XIcon, Loader2Icon, CheckIcon, AwardIcon, CpuIcon, BookOpenIcon, AlertTriangleIcon } from "lucide-react";
+import { XIcon, Loader2Icon, CheckIcon, AwardIcon, CpuIcon, BookOpenIcon, AlertTriangleIcon, EyeIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ChatMessage } from "./chat-message";
 import { InspectionPanel } from "./inspection-panel";
-import type { Question, RecommendationResult } from "@/lib/api";
+import type { Question, RecommendationResult, RecommendationItem } from "@/lib/api";
 
 const PARCOURS_NAMES: Record<string, string> = {
   esii: "ESIIA — Électronique & Télécoms",
@@ -139,6 +140,8 @@ export function ChatConversationView({
   onSingleSelect,
   onValidateAnswer,
 }: ChatConversationViewProps) {
+  const [selectedDetail, setSelectedDetail] = useState<RecommendationItem | null>(null);
+
   return (
     <div className="flex h-full flex-col">
       <div className="flex-1 overflow-y-auto px-4 md:px-8 py-8">
@@ -192,8 +195,17 @@ export function ChatConversationView({
                           <span className="text-[9px] font-bold text-primary uppercase tracking-wider">
                             Recommandation #{index + 1}
                           </span>
-                          <h4 className="text-xs sm:text-sm font-bold text-foreground">
+                          <h4 className="text-xs sm:text-sm font-bold text-foreground flex items-center gap-1.5">
                             {PARCOURS_NAMES[item.parcours.toLowerCase()] ?? item.parcours.toUpperCase()}
+                            <Button
+                              variant="ghost"
+                              size="icon-sm"
+                              className="size-5 rounded p-0 text-muted-foreground hover:text-foreground hover:bg-muted inline-flex items-center justify-center shrink-0"
+                              onClick={() => setSelectedDetail(item)}
+                              title="Voir les détails complets"
+                            >
+                              <EyeIcon className="size-3.5" />
+                            </Button>
                           </h4>
                         </div>
                         <div className="flex flex-wrap items-center gap-1.5">
@@ -362,6 +374,128 @@ export function ChatConversationView({
                   </Button>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {selectedDetail && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-card border border-border rounded-2xl max-w-xl w-full max-h-[85vh] overflow-y-auto shadow-2xl p-6 relative flex flex-col space-y-4 animate-in fade-in zoom-in duration-200">
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={() => setSelectedDetail(null)}
+              className="absolute top-4 right-4 size-8 rounded-full border"
+            >
+              <XIcon className="size-4" />
+            </Button>
+            
+            <div className="space-y-1">
+              <span className="text-[10px] font-bold text-primary uppercase tracking-wider">
+                Détails du parcours
+              </span>
+              <h3 className="text-lg font-bold text-foreground">
+                {PARCOURS_NAMES[selectedDetail.parcours.toLowerCase()] ?? selectedDetail.parcours.toUpperCase()}
+              </h3>
+              <div className="flex flex-wrap gap-2 mt-1">
+                <span className={cn("text-[10px] font-semibold px-2 py-0.5 rounded-full border", 
+                  (CATEGORY_STYLES[selectedDetail.categorie.toLowerCase()] || { bg: "bg-muted text-muted-foreground border-transparent" }).bg,
+                  (CATEGORY_STYLES[selectedDetail.categorie.toLowerCase()] || { text: "" }).text
+                )}>
+                  {(CATEGORY_STYLES[selectedDetail.categorie.toLowerCase()] || { label: selectedDetail.categorie }).label}
+                </span>
+                {selectedDetail.proba_ml !== null && (
+                  <span className="text-[10px] font-semibold bg-blue-500/10 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full border border-blue-500/20">
+                    ML: {(selectedDetail.proba_ml * 100).toFixed(1)}%
+                  </span>
+                )}
+                <span className="text-[10px] font-semibold bg-purple-500/10 text-purple-600 dark:text-purple-400 px-2 py-0.5 rounded-full border border-purple-500/20">
+                  Prolog: {selectedDetail.score_regles} pts
+                </span>
+              </div>
+            </div>
+
+            <div className="border-t border-border/60 my-2" />
+
+            <div className="space-y-2">
+              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Description complète</h4>
+              <p className="text-sm text-foreground leading-relaxed font-normal whitespace-pre-line">
+                {selectedDetail.description}
+              </p>
+            </div>
+
+            <div className="border-t border-border/60 my-2" />
+
+            <div className="space-y-3">
+              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Arguments de correspondance (Prolog)</h4>
+              
+              <div className="space-y-2.5 text-xs">
+                {selectedDetail.motifs.matieres && selectedDetail.motifs.matieres.length > 0 && (
+                  <div className="space-y-1">
+                    <span className="text-muted-foreground font-semibold">📚 Matières préférées correspondantes :</span>
+                    <div className="flex flex-wrap gap-1.5 mt-0.5">
+                      {selectedDetail.motifs.matieres.map(getLabel).map((lbl) => (
+                        <span key={lbl} className="bg-secondary px-2 py-0.5 rounded text-foreground font-medium border">
+                          {lbl}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {selectedDetail.motifs.competences && selectedDetail.motifs.competences.length > 0 && (
+                  <div className="space-y-1">
+                    <span className="text-muted-foreground font-semibold">⚡ Compétences validées :</span>
+                    <div className="flex flex-wrap gap-1.5 mt-0.5">
+                      {selectedDetail.motifs.competences.map(getLabel).map((lbl) => (
+                        <span key={lbl} className="bg-secondary px-2 py-0.5 rounded text-foreground font-medium border">
+                          {lbl}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {selectedDetail.motifs.interets && selectedDetail.motifs.interets.length > 0 && (
+                  <div className="space-y-1">
+                    <span className="text-muted-foreground font-semibold">🎯 Centres d&apos;intérêt alignés :</span>
+                    <div className="flex flex-wrap gap-1.5 mt-0.5">
+                      {selectedDetail.motifs.interets.map(getLabel).map((lbl) => (
+                        <span key={lbl} className="bg-secondary px-2 py-0.5 rounded text-foreground font-medium border">
+                          {lbl}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {selectedDetail.motifs.metier_alignee && (
+                  <div className="flex items-center gap-2 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 p-2.5 rounded-lg border border-emerald-500/20">
+                    <span className="text-base shrink-0">💼</span>
+                    <span>Ce parcours prépare directement au métier ciblé dans votre profil.</span>
+                  </div>
+                )}
+
+                {selectedDetail.motifs.suggestions && selectedDetail.motifs.suggestions.length > 0 && (
+                  <div className="space-y-1 pt-1">
+                    <span className="text-muted-foreground font-semibold">💡 Conseils de préparation (prérequis suggérés) :</span>
+                    <div className="flex flex-wrap gap-1.5 mt-0.5">
+                      {selectedDetail.motifs.suggestions.map(getLabel).map((lbl) => (
+                        <span key={lbl} className="bg-yellow-500/10 text-yellow-700 dark:text-yellow-300 px-2 py-0.5 rounded border border-yellow-500/20 font-medium">
+                          {lbl}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-4">
+              <Button onClick={() => setSelectedDetail(null)}>
+                Fermer
+              </Button>
             </div>
           </div>
         </div>
