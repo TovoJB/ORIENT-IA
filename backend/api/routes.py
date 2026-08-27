@@ -51,6 +51,7 @@ async def chat(request: ChatRequest) -> ChatResponse:
         question = predictive["question"]
         recommendation = predictive["recommendation"]
         tools_used = []
+        comparison = None
         traces.trace("chat:reponse_formulaire", session_id, {"champ": request.answer.champ})
     else:
         # Message libre → TOUJOURS l'agent Gemini, qui extrait le profil

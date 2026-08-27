@@ -5,7 +5,7 @@ import { XIcon, Loader2Icon, CheckIcon, AwardIcon, CpuIcon, BookOpenIcon, AlertT
 import { cn } from "@/lib/utils";
 import { ChatMessage } from "./chat-message";
 import { InspectionPanel } from "./inspection-panel";
-import type { Question, RecommendationResult, RecommendationItem } from "@/lib/api";
+import type { Question, RecommendationResult, RecommendationItem, ComparisonResult } from "@/lib/api";
 
 const PARCOURS_NAMES: Record<string, string> = {
   esii: "ESIIA — Électronique & Télécoms",
@@ -116,6 +116,7 @@ interface ChatConversationViewProps {
   pendingQuestion: Question | null;
   selection: string[];
   recommendation: RecommendationResult | null;
+  comparison: ComparisonResult | null;
   inputDisabled: boolean;
   onMessageChange: (value: string) => void;
   onSend: (content: string) => void;
@@ -132,6 +133,7 @@ export function ChatConversationView({
   pendingQuestion,
   selection,
   recommendation,
+  comparison,
   inputDisabled,
   onMessageChange,
   onSend,
@@ -167,6 +169,94 @@ export function ChatConversationView({
               </div>
             </div>
           )}
+
+          {comparison && (() => {
+            const items = Object.values(comparison.parcours) as RecommendationItem[];
+            return (
+              <div className="rounded-2xl border border-border bg-card p-5 space-y-4 shadow-sm">
+                <div className="flex items-center gap-2.5 pb-3 border-b border-border">
+                  <div className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-500">
+                    <BookOpenIcon className="size-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-foreground">Comparaison de parcours</h3>
+                    <p className="text-[10px] text-muted-foreground">
+                      Analyse côte à côte générée par les règles Prolog et la base de connaissances.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {items.map((item) => {
+                    const catStyle = CATEGORY_STYLES[item.categorie?.toLowerCase()] || {
+                      label: item.categorie,
+                      bg: "bg-muted text-muted-foreground border-transparent",
+                      text: "text-muted-foreground",
+                    };
+                    return (
+                      <div key={item.parcours} className="rounded-xl border border-border/80 bg-muted/20 p-4 space-y-3 hover:bg-muted/40 transition-colors">
+                        <div className="flex items-start justify-between gap-2 border-b border-border/40 pb-2">
+                          <div className="space-y-0.5 min-w-0">
+                            <span className={cn("text-[9px] font-semibold px-2 py-0.5 rounded-full border", catStyle.bg, catStyle.text)}>
+                              {catStyle.label}
+                            </span>
+                            <h4 className="text-xs font-bold text-foreground mt-1 flex items-center gap-1.5 flex-wrap">
+                              {PARCOURS_NAMES[item.parcours?.toLowerCase()] ?? item.parcours?.toUpperCase()}
+                              <Button
+                                variant="ghost"
+                                size="icon-sm"
+                                className="size-5 rounded p-0 text-muted-foreground hover:text-foreground hover:bg-muted inline-flex items-center justify-center shrink-0"
+                                onClick={() => setSelectedDetail(item)}
+                                title="Voir les détails complets"
+                              >
+                                <EyeIcon className="size-3.5" />
+                              </Button>
+                            </h4>
+                          </div>
+                          <span className="text-[9px] font-semibold bg-purple-500/10 text-purple-600 dark:text-purple-400 px-2 py-0.5 rounded-full border border-purple-500/20 shrink-0">
+                            {item.score_regles} pts
+                          </span>
+                        </div>
+
+                        {item.description && (
+                          <p className="text-[11px] text-muted-foreground leading-relaxed line-clamp-3">
+                            {item.description}
+                          </p>
+                        )}
+
+                        <div className="space-y-1.5 text-[10px] pt-1 border-t border-border/30">
+                          {(item.motifs?.matieres?.length ?? 0) > 0 && (
+                            <div className="flex items-start gap-1">
+                              <span className="text-muted-foreground font-semibold shrink-0">📚</span>
+                              <span className="text-foreground">{item.motifs.matieres.map(getLabel).join(", ")}</span>
+                            </div>
+                          )}
+                          {(item.motifs?.competences?.length ?? 0) > 0 && (
+                            <div className="flex items-start gap-1">
+                              <span className="text-muted-foreground font-semibold shrink-0">⚡</span>
+                              <span className="text-foreground">{item.motifs.competences.map(getLabel).join(", ")}</span>
+                            </div>
+                          )}
+                          {item.motifs?.metier_alignee && (
+                            <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold">
+                              <span>💼</span>
+                              <span>Métier ciblé compatible</span>
+                            </div>
+                          )}
+                          {!(item.motifs?.matieres?.length) && !(item.motifs?.competences?.length) && !item.motifs?.metier_alignee && (
+                            <div className="flex items-center gap-1 text-amber-600 dark:text-amber-400">
+                              <AlertTriangleIcon className="size-3" />
+                              <span>Aucune correspondance de profil trouvée</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
 
           {recommendation && (
             <div className="rounded-2xl border border-border bg-card p-5 space-y-5 shadow-sm">
@@ -390,7 +480,7 @@ export function ChatConversationView({
             >
               <XIcon className="size-4" />
             </Button>
-            
+
             <div className="space-y-1">
               <span className="text-[10px] font-bold text-primary uppercase tracking-wider">
                 Détails du parcours
@@ -399,7 +489,7 @@ export function ChatConversationView({
                 {PARCOURS_NAMES[selectedDetail.parcours.toLowerCase()] ?? selectedDetail.parcours.toUpperCase()}
               </h3>
               <div className="flex flex-wrap gap-2 mt-1">
-                <span className={cn("text-[10px] font-semibold px-2 py-0.5 rounded-full border", 
+                <span className={cn("text-[10px] font-semibold px-2 py-0.5 rounded-full border",
                   (CATEGORY_STYLES[selectedDetail.categorie.toLowerCase()] || { bg: "bg-muted text-muted-foreground border-transparent" }).bg,
                   (CATEGORY_STYLES[selectedDetail.categorie.toLowerCase()] || { text: "" }).text
                 )}>
@@ -429,7 +519,7 @@ export function ChatConversationView({
 
             <div className="space-y-3">
               <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Arguments de correspondance (Prolog)</h4>
-              
+
               <div className="space-y-2.5 text-xs">
                 {selectedDetail.motifs.matieres && selectedDetail.motifs.matieres.length > 0 && (
                   <div className="space-y-1">

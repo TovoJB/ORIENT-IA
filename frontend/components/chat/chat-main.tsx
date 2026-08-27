@@ -8,6 +8,7 @@ import {
   sendChatTurn,
   type Question,
   type RecommendationResult,
+  type ComparisonResult,
 } from "@/lib/api";
 
 interface Message {
@@ -29,6 +30,7 @@ export function ChatMain() {
   const [pendingQuestion, setPendingQuestion] = useState<Question | null>(null);
   const [selection, setSelection] = useState<string[]>([]);
   const [recommendation, setRecommendation] = useState<RecommendationResult | null>(null);
+  const [comparison, setComparison] = useState<ComparisonResult | null>(null);
   const [profils, setProfils] = useState<Record<string, string>>({});
 
   // Synchronise profil + transcript vers le store (panneau gauche).
@@ -68,6 +70,7 @@ export function ChatMain() {
     setConversationId(data.conversation_id);
     setPendingQuestion(data.question);
     setRecommendation(data.recommendation);
+    if (data.comparison) setComparison(data.comparison);
     setSelection([]);
     if (data.profil) setProfils(data.profil);
   };
@@ -135,6 +138,7 @@ export function ChatMain() {
     setConversationId(null);
     setPendingQuestion(null);
     setRecommendation(null);
+    setComparison(null);
     setSelection([]);
     setProfils({});
     resetLiveSession();
@@ -149,6 +153,7 @@ export function ChatMain() {
         pendingQuestion={pendingQuestion}
         selection={selection}
         recommendation={recommendation}
+        comparison={comparison}
         inputDisabled={inputDisabled}
         onMessageChange={setMessage}
         onSend={send}
