@@ -174,6 +174,19 @@ step_eval() {
   warn "Ajoutez --llm pour mesurer la fidélité des réponses (appels Gemini, quota)."
 }
 
+step_evaljeu() {
+  section "ÉVALUATION" "banc de test 32 cas (jeu_evaluation.csv) via /chat"
+  if ! curl -s -m 3 http://localhost:8000/health >/dev/null 2>&1; then
+    warn "backend non lancé — démarrage sur :8000"
+    setsid bash -c "cd '$BACKEND' && exec '$VENV/bin/uvicorn' main:app --port 8000" >/dev/null 2>&1 &
+    BACKEND_PID=$!
+    sleep 4
+  fi
+  ( cd "$BACKEND" && "$PY" -m evaluation.eval_jeu_api )
+  ok "résultats écrits (evaluation/jeu_evaluation_resultats.csv)"
+  warn "relancez les cas manquants avec --ids TC-XX (quota Gemini) ou --delai 2"
+}
+
 CLEANED=0
 cleanup() {
   [ "$CLEANED" -eq 1 ] && return
@@ -221,6 +234,7 @@ Usage: ./scripts/pony.sh [commande]
   train      entraîne le modèle ML
   test       lance tous les tests (backend + frontend)
   eval       lance l'évaluation (RAG + ML ; --llm pour le LLM)
+  evaljeu    lance le banc de test 32 cas en ligne (jeu_evaluation.csv → résultats CSV)
   resetdb    supprime la base SQLite (clinique.db), recréée au prochain démarrage
   run        démarre backend + frontend
   run-api    démarre seulement le backend
@@ -240,6 +254,7 @@ main() {
     train)     step_train ;;
     test)      step_test ;;
     eval)      step_eval ;;
+    evaljeu)   step_evaljeu ;;
     resetdb)   step_resetdb ;;
     run)       step_run ;;
     run-api)   ( cd "$BACKEND" && "$VENV/bin/uvicorn" main:app --port 8000 --reload ) ;;

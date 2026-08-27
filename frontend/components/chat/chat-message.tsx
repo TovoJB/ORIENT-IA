@@ -24,9 +24,9 @@ interface ChatMessageProps {
 // ---------------------------------------------------------------------------
 
 function renderInline(text: string): React.ReactNode[] {
-  // Motifs : `code` > **gras** > *italique*
+  // Motifs : URL > `code` > **gras** > *italique*
   const parts: React.ReactNode[] = [];
-  const re = /(`[^`]+`|\*\*[^*]+\*\*|\*[^*]+\*)/g;
+  const re = /(https?:\/\/[^\s)>\]"]+|`[^`]+`|\*\*[^*]+\*\*|\*[^*]+\*)/g;
   let last = 0;
   let match: RegExpExecArray | null;
   let key = 0;
@@ -36,7 +36,19 @@ function renderInline(text: string): React.ReactNode[] {
       parts.push(<Fragment key={key++}>{text.slice(last, match.index)}</Fragment>);
     }
     const token = match[0];
-    if (token.startsWith("`") && token.endsWith("`")) {
+    if (token.startsWith("http")) {
+      parts.push(
+        <a
+          key={key++}
+          href={token}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline underline-offset-2 text-primary hover:opacity-80 break-all"
+        >
+          {token}
+        </a>
+      );
+    } else if (token.startsWith("`") && token.endsWith("`")) {
       parts.push(
         <code key={key++} className="bg-muted/70 px-1 py-0.5 rounded text-[90%] font-mono">
           {token.slice(1, -1)}

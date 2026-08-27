@@ -8,6 +8,14 @@ Système à 3 briques qui communiquent : **données tracées** (SQLite + registr
 conversationnel** (Gemini + 6 outils + RAG avec citations). Les exigences du sujet
 (traçabilité, évaluation 34 cas, éthique/sécurité) sont documentées dans `docs/`.
 
+Livrables d'évaluation (sujet) :
+- `backend/evaluation/test_suite.json` (34 cas, hors-ligne) + `run_evaluation.py` → `./pony eval`.
+- `backend/evaluation/jeu_evaluation.csv` (32 cas, 9 catégories obligatoires) + `eval_jeu_api.py`
+  → banc de test EN LIGNE : injecte chaque question via `/chat` et écrit
+  `jeu_evaluation_resultats.csv` (question, réponse attendue, réponse obtenue, verdict SUCCÈS/ÉCHEC).
+  Commande : `./pony evaljeu` (ou `python -m evaluation.eval_jeu_api --ids TC-XX` pour relancer
+  des cas, fusion avec les résultats existants).
+
 Stack : **FastAPI (Python) + Google Gemini + scikit-learn + SQLite + SWI-Prolog (pyswip)** · **Next.js (React)**.
 
 ## Démarrage rapide
