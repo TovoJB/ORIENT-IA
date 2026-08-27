@@ -212,14 +212,25 @@ def comparer(profil: dict, parcours_a: str, parcours_b: str) -> dict:
     result = {"parcours": {}}
     for code in (parcours_a, parcours_b):
         data = PARCOURS_DATA.get(code, {})
+        expl = prolog_service.explication(profil, code)
         result["parcours"][code] = {
-            "categorie": data.get("categorie"),
+            "parcours": code,
+            "categorie": data.get("categorie", ""),
             "matieres": data.get("matieres", []),
             "competences": data.get("competences", []),
             "prerequis": data.get("prerequis", []),
             "metiers": data.get("metiers", []),
             "prerequis_manquants": prolog_service.prerequis_manquants(profil, code),
             "eligibile": code in prolog_service.parcours_possibles(profil),
-            "score_regles": prolog_service.explication(profil, code)["score"],
+            "score_regles": expl.get("score", 0),
+            "proba_ml": None,  # pas de probabilité ML hors orientation complète
+            "description": _description(code),
+            "motifs": {
+                "matieres": expl.get("matieres", []),
+                "competences": expl.get("competences", []),
+                "interets": expl.get("interets", []),
+                "metier_alignee": expl.get("metier_alignee", False),
+                "suggestions": expl.get("suggestions", []),
+            }
         }
     return result

@@ -85,12 +85,17 @@ export interface Question {
   options: QuestionOption[];
 }
 
+export interface ComparisonResult {
+  parcours: Record<string, RecommendationItem>;
+}
+
 export interface ChatApiResponse {
   reply: string;
   conversation_id: string;
   tools_used: string[];
   question: Question | null;
   recommendation: RecommendationResult | null;
+  comparison: ComparisonResult | null;
   termine: boolean;
   profil: Record<string, string>;
 }

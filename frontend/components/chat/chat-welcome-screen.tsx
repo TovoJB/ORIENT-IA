@@ -59,7 +59,7 @@ export function ChatWelcomeScreen({
           </span>
         </h1>
           <p className="text-2xl text-foreground">
-             Votre assistant d'orientation à l'ISPM
+             Votre assistant d&apos;orientation à l&apos;ISPM
           </p>
         </div>
 

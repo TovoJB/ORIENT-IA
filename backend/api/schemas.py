@@ -33,6 +33,7 @@ class ChatResponse(BaseModel):
     tools_used: list[str] = Field(default_factory=list)
     question: Optional[QuestionPayload] = None
     recommendation: Optional[dict] = None
+    comparison: Optional[dict] = None
     termine: bool = False
     profil: dict = Field(default_factory=dict)
     inspection: Optional[dict] = None

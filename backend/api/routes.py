@@ -68,12 +68,31 @@ async def chat(request: ChatRequest) -> ChatResponse:
         })
 
         # Auto-attach : si Gemini n'a pas déclenché de formulaire ni de recommandation,
-        # chercher la prochaine question manquante et l'afficher
-        if question is None and recommendation is None:
+        # chercher la prochaine question manquante et l'afficher.
+        # On évite d'attacher si le message concerne une comparaison de filières ou une demande d'info générale.
+        is_info_request = False
+        msg_lower = (request.message or "").lower()
+        info_keywords = [
+            "différence", "compare", "vs", "versus", "entre", "pourquoi",
+            "expliqu", "qu'est-ce", "quest-ce", "c'est quoi", "information",
+            "détail", "prerequis", "prérequis", "connaître", "connaitre"
+        ]
+        parcours_codes = [
+            "esii", "isaia", "imticia", "iggia", "caa", "fic", "dtja", "emp",
+            "iaa", "pip", "aee", "emii", "gca", "icmp", "tee", "teh"
+        ]
+        if any(kw in msg_lower for kw in info_keywords) or any(code in msg_lower for code in parcours_codes):
+            is_info_request = True
+        if any(t in tools_used for t in ["rechercher_docs", "comparer_parcours", "verifier_prerequis"]):
+            is_info_request = True
+
+        if question is None and recommendation is None and not is_info_request:
             profil_actuel = profiles.get_profile(session_id)
             next_q = questionnaire.prochaine_question(profil_actuel)
             if next_q is not None:
                 question = questionnaire.question_payload(next_q)
+
+        comparison = result.get("comparison")
 
     conversation_repository.add_message(conversation.id, "assistant", reply)
     return ChatResponse(
@@ -82,6 +101,7 @@ async def chat(request: ChatRequest) -> ChatResponse:
         tools_used=tools_used,
         question=question,
         recommendation=recommendation,
+        comparison=comparison,
         termine=recommendation is not None,
         profil=profiles.get_profile(session_id),
         inspection=recommendation.get("inspection") if recommendation else None,

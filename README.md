@@ -1,179 +1,241 @@
 # ORIENT'IA — Assistant d'orientation pédagogique (ISPM)
 
-Agent IA qui recommande un parcours d'études parmi **16 parcours ISPM** (5 catégories),
-en combinant **règles Prolog** (contraintes), **Machine Learning** (RandomForest /
-LogisticRegression) et un **agent conversationnel Gemini** (RAG sourcé, 5 outils, traçabilité).
+**ORIENT'IA** est un assistant IA d'orientation qui recommande un **parcours d'études
+parmi les 16 parcours de l'ISPM (Madagascar)** répartis en 5 catégories. Il combine
+quatre briques qui communiquent :
 
-Stack: **Python / FastAPI / scikit-learn / Gemini API / SQLite / Prolog (pyswip)** · **Next.js (React) / square-ui chat template**.
+- **Règles Prolog** (`SWI-Prolog` + fallback Python) : filtrage des parcours non éligibles
+  (série de bac, prérequis) et score de compatibilité.
+- **Machine Learning** (`scikit-learn`) : RandomForest + LogisticRegression entraînés sur
+  les données synthétiques, avec comparaison scientifique et étude des biais.
+- **Agent conversationnel Gemini** : 6 outils, RAG sourcé avec citations, formulaire guidé
+  à choix multiples et politiques de refus éthique/sécurité.
+- **Traçabilité** : chaque étape (outil, refus, recherche, prédiction) est journalisée
+  dans SQLite (`clinique.db`).
 
-> **Nouveau ici ? Lis la documentation : [`docs/`](docs/README.md)**
-> Elle explique l'architecture pour débutants et contient des tutoriels pas à pas.
+Stack : **Python / FastAPI / scikit-learn / Google Gemini / SQLite / SWI-Prolog (pyswip)** ·
+**Next.js (React)**.
 
-## Démarrage rapide avec PONY
+---
 
-Le projet embarque un lanceur nommé **PONY** qui vérifie, installe, teste et lance tout :
+## 1. Livrables de l'exercice
 
-```bash
-./scripts/pony.sh            # Linux / macOS — pipeline complet: check → setup → install → train → test → run
-./pony check                 # vérifie l'environnement (python, node, .env)
-./pony train                 # entraîne RF+LR sur les données synthétiques (≥30 profils requis)
-./pony test                  # lance TOUS les tests (backend + frontend)
-./pony eval                  # évaluation 34 cas : RAG + ML (ajoutez --llm pour la fidélité LLM)
-./pony resetdb               # supprime la base SQLite (clinique.db), recréée au redémarrage
-./pony run                   # démarre backend (:8000) + frontend (:3000)
+Ce projet répond à l'exercice avec **deux supports complémentaires** :
+
+| Livrable | Support | Où le trouver |
+| -------- | ------- | ------------- |
+| **Vidéo de démonstration (5 min)** | Les cas demandés par l'exercice y sont montrés en action | `⏳ chemin à compléter` (vidéo externe au dépôt) |
+| **README** (ce document) | Explique le reste : emplacement de la base synthétique, architecture du projet, lanceur PONY, évaluation | `README.md` |
+| **Photo du lanceur PONY** | Capture d'écran du pipeline qui vérifie, installe, teste et lance tout | `data/photo/` |
+
+La vidéo montre les **cas demandés** en situation réelle ; ce document décrit la
+structure et la méthodologie qui rendent ces cas possibles.
+
+---
+
+## 2. Où se trouve la base de données synthétisée ?
+
+La base synthétique est dans **`data/synthetique/`** :
+
+```
+data/synthetique/
+├── dataset_orientia_synthetique.csv   # 400 profils (260 étudiants + 140 professionnels)
+├── generate_synthetic_data.py         # script de génération reproductible
+└── README.md                          # méthodologie complète (règles, distributions, cohérence)
 ```
 
-**Windows** : utilisez la version PowerShell équivalente :
+| Fichier | Contenu |
+| ------- | ------- |
+| `dataset_orientia_synthetique.csv` | **400 profils anonymisés** (`rep_synth_XXXX`) : série de bac, notes par matière, mention, matières/compétences/intérêts, métier visé, prérequis, parcours choisi, satisfaction, `referait_choix` |
+| `generate_synthetic_data.py` | Génération **documentée et reproductible** (seed fixe), conforme aux critères réels de l'ISPM |
+| `README.md` | Méthodologie : éligibilité des séries, distributions gaussiennes par série, boost d'affinité, profilage multi-hot, scores composites, modèle de satisfaction |
 
-```powershell
-.\pony.cmd                   # raccourci (contourne la restriction PowerShell)
-.\scripts\pony.ps1 test      # ou directement
-```
+**Pourquoi ces données ?** Le ML exige **≥ 30 profils** ; le dataset en fournit 400,
+statistiquement cohérents avec les règles académiques ISPM (séries autorisées par
+parcours, corrélation notes → compétences, satisfaction corrélée à la cohérence du
+profil).
 
-`./pony` est un raccourci de `./scripts/pony.sh`. Tapez `./pony help` (ou `.\pony.cmd help`) pour la liste des commandes.
+---
 
-## Documentation
+## 3. Architecture du projet
 
-| Où | Quoi |
-| -- | ---- |
-| [`docs/`](docs/README.md) | Sommaire de la doc (lecture pour débutants) |
-| [`docs/architecture/`](docs/architecture/) | Comment marchent le backend et le frontend |
-| [`docs/tutorials/setup_gemini.md`](docs/tutorials/setup_gemini.md) | Activer l'IA Gemini (à faire en premier) |
-| [`docs/tutorials/add_ml_model.md`](docs/tutorials/add_ml_model.md) | Utiliser son propre modèle ML |
-| [`docs/tutorials/create_feature.md`](docs/tutorials/create_feature.md) | Ajouter une fonctionnalité de bout en bout |
-| [`docs/tutorials/implementation_example.md`](docs/tutorials/implementation_example.md) | Exemple complet commenté : fichiers à créer, ordre, formes des fonctions, jusqu'au test |
+Flux : **route → service → repository → domain**. Un étage n'appelle que son voisin
+(clean architecture, backend d'abord).
 
-## Tests
-
-| Partie | Outil | Commande |
-| ------ | ----- | -------- |
-| Backend | pytest | `cd backend && ./.venv/bin/python -m pytest` |
-| Frontend | vitest | `cd frontend && npm test` |
-| Qualité frontend | eslint + build | `cd frontend && npm run lint && npm run build` |
-
-Le plus simple : `./pony test` fait tout d'un coup.
-
-## Arborescence
+![Architecture d'ORIENT'IA — boucle de collecte progressive](data/photo/boucle_collecte_progressive_orientia.png)
 
 ```
 cliniqueExam/
-├── scripts/
-│   ├── pony.sh                   # PONY: lanceur Linux/macOS (check / install / train / test / eval / run)
-│   └── pony.ps1                  # PONY: lanceur Windows (PowerShell)
-├── pony.cmd                      # Raccourci Windows -> scripts/pony.ps1
-├── docs/                         # Documentation + tutoriels (voir tableau ci-dessus)
+├── scripts/                   # PONY : pony.sh (Linux/macOS) + pony.ps1 (Windows)
+├── pony / pony.cmd            # raccourcis vers le lanceur
 ├── data/
-│   ├── mapping_taxonomie_orientia.md   # 16 parcours / 5 catégories (référence)
-│   ├── sources/                  # Corpus RAG documenté + registre_sources.csv
-│   ├── enquete/                  # Questionnaire + registre de collecte (à remplir)
-│   ├── synthetique/              # Génération documentée + dataset (400 profils)
-│   └── dataset_orientia_squelette.csv  # Forme du profil
-├── backend/                     # API FastAPI (clean architecture)
-│   ├── main.py                  # Entrypoint FastAPI + CORS + /health
-│   ├── config.py                # .env (GEMINI_API_KEY, DB_PATH, DATASET_PATH, RAG_EMBEDDING)
-│   ├── requirements.txt / requirements-dev.txt
-│   ├── .env / .env.example      # secrets jamais commités
-│   ├── tests/                   # 40 tests pytest (api, ml, prolog, orientation, chat, rag, llm, sqlite)
-│   ├── api/
-│   │   ├── routes.py            # /chat /predict /orienter /comparer /prerequis /sources /traces /moteurs
-│   │   └── schemas.py           # Modèles Pydantic
+│   ├── mapping_taxonomie_orientia.md    # 16 parcours / 5 catégories (référence)
+│   ├── synthetique/                    # ⭐ base synthétique (voir section 2)
+│   ├── sources/                        # corpus RAG (6 documents) + registre_sources.csv
+│   ├── enquete/ & sondage/             # questionnaire + registre de collecte
+│   └── photo/                          # 📸 photos (lanceur PONY, schéma de collecte)
+├── backend/                   # API FastAPI
+│   ├── main.py                # entrypoint + CORS + /health (état DB)
+│   ├── config.py              # .env (GEMINI_API_KEY, DB_PATH, DATASET_PATH, ...)
+│   ├── api/routes.py          # /chat /orienter /predict /comparer /prerequis /inspection /traces /moteurs
+│   ├── api/schemas.py         # modèles Pydantic
 │   ├── services/
-│   │   ├── chat_service.py      # Agent : Gemini + 5 outils + refus (éthique/sécurité)
-│   │   ├── orientation_service.py  # Hybridation Prolog→ML→fusion 60/40 + explication
-│   │   ├── prolog_service.py / rules_fallback.py  # Règles (pyswip + fallback Python)
-│   │   ├── ml_service.py / ml_features.py         # RF+LR, baseline, métriques
-│   │   ├── rag_service.py       # RAG v2 : embeddings (gemini/tfidf) + citations
-│   │   ├── llm_service.py       # Gemini (ask_gemini + function calling)
-│   │   ├── profiles.py / traces.py                # profil de session + observabilité
-│   │   └── rules_fallback.py
-│   ├── repositories/            # base + sqlite + in_memory + fabrique
-│   ├── knowledge_base/orientia_rules.pl   # Base Prolog (16 parcours)
-│   ├── evaluation/
-│   │   ├── test_suite.json      # 34 cas catégorisés (incl. sécurité/biais)
-│   │   └── run_evaluation.py    # mesures RAG/ML/LLM → rapport_evaluation.json
-│   ├── notebooks/               # livrables ML (exploration, comparaison, biais)
-│   ├── utils/helpers.py
-│   └── rag_documents.txt
-└── frontend/                    # Next.js (React), chat square-ui
-    ├── lib/api.ts               # SEUL point de contact backend (/chat, /orienter)
-    ├── store/chat-store.ts      # Zustand
-    └── components/chat/         # ChatMain, ChatInputBox, ChatMessage...
+│   │   ├── chat_service.py        # agent Gemini + 6 outils + politiques de refus
+│   │   ├── questionnaire.py       # formulaire guidé à choix multiples
+│   │   ├── orientation_service.py # hybridation : Prolog filtre → ML choisit → fusion 60/40
+│   │   ├── prolog_service.py      # règles SWI-Prolog (pyswip) + trace des requêtes
+│   │   ├── rules_fallback.py      # miroir Python des 16 parcours (fallback automatique)
+│   │   ├── ml_service.py          # train() RF + LR + baseline, predict(profil)
+│   │   ├── ml_features.py         # profil → vecteur de features (tolérant)
+│   │   ├── rag_service.py         # RAG v2 : embeddings gemini/tfidf + citations
+│   │   ├── llm_service.py         # Google Gemini (SDK google-genai)
+│   │   ├── profiles.py / traces.py# profil de session + observabilité
+│   │   └── inspection.py          # mode inspection (force_prolog, raisonnement en direct)
+│   ├── repositories/          # base (interface) + sqlite + in_memory + fabrique
+│   ├── knowledge_base/orientia_rules.pl  # base Prolog (16 parcours, contraintes, scores)
+│   ├── evaluation/            # test_suite.json (34 cas) + run_evaluation.py → rapport
+│   ├── notebooks/             # exploration, comparaison RF/LR, étude des biais (livrables)
+│   └── tests/                 # 70 tests pytest
+└── frontend/                  # Next.js (React)
+    ├── lib/api.ts             # SEUL point de contact avec le backend
+    ├── store/chat-store.ts    # Zustand (profil + historique en temps réel)
+    └── components/chat/       # ChatMain, ChatSidebar, InspectionPanel...
 ```
 
-## Rôle de chaque dossier (backend)
+### Pipeline de recommandation
 
-| Dossier       | Responsabilité                                                  |
-| ------------- | --------------------------------------------------------------- |
-| `api/`        | Couche HTTP : routes FastAPI, schémas de validation (Pydantic). |
-| `services/`   | Logique applicative : LLM, ML, RAG. Aucune logique HTTP ici.    |
-| `domain/`     | Entités métier pures (dataclasses), indépendantes de tout cadre. |
-| `repositories`| Accès aux données. **SQLite par défaut** (`clinique.db`), remplaçable (mémoire, autres DB) via `DB_PATH`. |
-| `evaluation/` | Tests manuels / smoke tests de vos services.                    |
-| `utils/`      | Helpers réutilisables.                                          |
+1. **Prolog** élimine les parcours non éligibles (série de bac, prérequis) et calcule un
+   score de compatibilité (matières / compétences / intérêts / métier).
+2. **ML** fournit les probabilités de chaque parcours (RandomForest, si entraîné).
+3. **Fusion** (`orientation_service`) : **60% proba ML + 40% score règles**.
+4. **Explication** : motifs + description sourcée (RAG) ; blocages listés.
+5. **Traçabilité** : chaque étape journalisée dans `traces` (SQLite).
 
-Flux : **route → service → repository**, les services ne dépendent que du domain.
-Les conversations sont persistées dans `backend/clinique.db` (SQLite) : elles survivent aux redémarrages.
+### Dialogue d'orientation
 
-## Backend
+Le chat combine l'agent Gemini et un **formulaire guidé à choix multiples** :
+- Message libre (y compris le premier) → Gemini extrait le profil, pose les questions
+  manquantes, puis recommande quand le profil est suffisant.
+- Clic sur une option → réponse **prédéfinie sans Gemini** (`questionnaire.reponse_predictive`).
+- La réponse contient `question`, `recommendation` et `profil` (mis à jour à chaque tour).
 
-Le plus simple : `./pony run-api` (installe les dépendances automatiquement). À la main :
+### Mode inspection
+
+Quand le mode est actif, `/orienter` et `/chat` renvoient un bloc `inspection` :
+filtrage Prolog (raisons de blocage), scores/motifs des règles, probabilités RandomForest,
+détail de la fusion 60/40 et requêtes Prolog réellement exécutées. `force_prolog` oblige
+SWI-Prolog sans repli silencieux.
+
+---
+
+## 4. Le lanceur PONY
+
+PONY vérifie, installe, entraîne, teste et lance tout le projet en une commande.
+
+![Lancement du pipeline PONY](data/photo/Capture%20d%E2%80%99%C3%A9cran%20du%202026-08-27%2015-17-53.png)
 
 ```bash
+./pony                    # pipeline complet : check → setup → install → train → test → run
+./pony check              # vérifie python, node, .env
+./pony train              # entraîne RF + LR sur data/synthetique/ (≥30 profils requis)
+./pony test               # pytest (70 tests) + eslint + vitest + build
+./pony eval               # évaluation 34 cas : RAG + ML (+ --llm pour la fidélité LLM)
+./pony resetdb            # supprime backend/clinique.db (recréée au redémarrage)
+./pony run                # backend :8000 + frontend :3000
+```
+
+**Windows** : `.\pony.cmd` (→ `scripts/pony.ps1`). `pony` est un symlink vers `scripts/pony.sh`.
+
+---
+
+## 5. Évaluation (34 cas exigés par le sujet)
+
+`./pony eval` exécute le jeu `backend/evaluation/test_suite.json` (**34 cas**
+catégorisés) et écrit `backend/evaluation/rapport_evaluation.json`.
+
+Répartition des 34 cas :
+
+| Catégorie | Cas | Catégorie | Cas |
+| --------- | --- | --------- | --- |
+| Factuelles | 7 | Infos absentes | 4 |
+| Comparaisons | 4 | Ambiguës | 3 |
+| Recommandations ML | 5 | Sécurité / injection | 3 |
+| Multi-sources | 4 | Biais | 2 |
+| Refus de profilage | 2 | | |
+
+Dernières mesures (voir `backend/evaluation/rapport_evaluation.json`) :
+
+- **RAG** : précision top-1 **0.67**, top-3 **1.0** (15 cas évalués).
+- **ML** : précision top-1 **1.0** sur les 5 cas de recommandation.
+
+### Évaluation du modèle RandomForest (livrable ML)
+
+Les figures d'évaluation du modèle (entraîné sur les 400 profils synthétiques)
+sont générées par le notebook `backend/notebooks/01_exploration_et_modeles.ipynb`
+et déposées dans `backend/notebooks/figures/`. Analyse complète dans
+[`RAPPORT_01_exploration_et_modeles.md`](backend/notebooks/RAPPORT_01_exploration_et_modeles.md).
+
+![Distribution des profils](backend/notebooks/figures/distributions_profils.png)
+*Répartition des 400 profils par parcours, sexe et série de bac.*
+
+![Comparaison des modèles](backend/notebooks/figures/comparaison_modeles.png)
+*RF vs LogisticRegression : accuracy (↑) et log-loss (↓), baseline en pointillés
+(accuracy ≈ 0.075 → ≈ 0.80–0.83).*
+
+![Matrice de confusion (RF)](backend/notebooks/figures/matrice_confusion.png)
+*Heatmap brute + normalisée : diagonale dominante, quelques classes fragiles
+(`aee`, `emii`) liées à de faibles effectifs.*
+
+![F1 par parcours](backend/notebooks/figures/f1_par_parcours.png)
+*Précision / rappel / F1 par parcours — weighted F1 ≈ 0.81, plusieurs parcours à 1.00.*
+
+![Importance des features (RF)](backend/notebooks/figures/importance_features.png)
+*Top 20 des importances Gini : dominées par les notes et scores composites.*
+
+![Analyse de biais (RF)](backend/notebooks/figures/analyse_biais.png)
+*Accuracy par groupe (famille de bac, série, type, sexe) : les écarts proviennent
+des notes corrélées à la série, d'où le rééquilibrage du jeu synthétique.*
+
+**Éthique & sécurité** : le système refuse les critères discriminatoires, le profilage
+psychologique et les injections, et rappelle que la recommandation *n'est pas une décision
+officielle d'admission*. Ces refus sont testés dans `evaluation/test_suite.json`.
+
+---
+
+## 6. Démarrage rapide
+
+```bash
+./pony            # tout-en-un : vérif → install → train → test → run
+```
+
+À la main :
+
+```bash
+# Backend
 cd backend
-python3 -m venv .venv
-./.venv/bin/pip install -r requirements-dev.txt   # runtime + tests
-
-# Configurer la clé API Gemini (voir docs/tutorials/setup_gemini.md)
-cp .env.example .env
-#   -> éditer .env et mettre GEMINI_API_KEY=votre_cle
-
-# (optionnel) entraîner le modèle ML
-./.venv/bin/python -m services.ml_service
-
-# Lancer le serveur
+python3 -m venv .venv && ./.venv/bin/pip install -r requirements-dev.txt
+cp .env.example .env                 # puis éditer .env (GEMINI_API_KEY)
 ./.venv/bin/uvicorn main:app --reload --port 8000
+
+# Frontend (autre terminal)
+cd frontend
+cp .env.example .env.local            # NEXT_PUBLIC_API_URL=http://localhost:8000
+npm install && npm run dev            # -> http://localhost:3000
 ```
 
 API dispo sur http://localhost:8000 — docs interactives : http://localhost:8000/docs
-
-- `POST /chat` `{"message": "...", "history": []}` → `{reply, conversation_id, tools_used}` (agent avec outils)
-- `POST /orienter` `{"profil": {...}}` → recommandation classée (Prolog filtre + ML choisit + explication)
-- `POST /predict` `{"profil": {...}}` → probabilités du modèle ML
-- `POST /comparer` / `POST /prerequis` → comparaison / vérification de prérequis
-- `GET/POST /inspection` → mode inspection (raisonnement Prolog + probabilités ML en temps réel)
-- `GET /sources` → registre des sources du corpus · `GET /traces` → observabilité
-- `GET /moteurs` → état des moteurs (règles, embeddings, ML) · `GET /health`
-
 Obtention de la clé Gemini : https://aistudio.google.com/apikey
 
-## Frontend
+---
 
-```bash
-cd frontend
-cp .env.example .env.local   # NEXT_PUBLIC_API_URL=http://localhost:8000
-npm install
-npm run dev                  # -> http://localhost:3000
-```
+## 7. Documentation & tests
 
-Le chat est un **formulaire guidé** : il pose des questions à **choix multiples**
-(prédéfinies, sans appel Gemini), construit le profil, puis affiche la
-**recommandation** (Prolog + ML) avec explications. Gemini n'est appelé que si
-nécessaire (question libre après la recommandation).
+| Sujet | Où |
+| ----- | -- |
+| Sommaire de la doc (débutants) | [`docs/README.md`](docs/README.md) |
+| Architecture backend / frontend | [`docs/architecture/`](docs/architecture/) |
+| Activer Gemini, ML, ajouter une feature | [`docs/tutorials/`](docs/tutorials/) |
+| Méthodologie de la base synthétique | [`data/synthetique/README.md`](data/synthetique/README.md) |
+| Notations ML, comparaison RF/LR, biais | [`backend/notebooks/RAPPORT_01_exploration_et_modeles.md`](backend/notebooks/RAPPORT_01_exploration_et_modeles.md) |
 
-## Évaluer le système (sujet)
-
-```bash
-./pony eval               # RAG + ML hors-ligne (34 cas)
-./pony eval --llm         # + fidélité des réponses LLM (appels Gemini)
-cat backend/evaluation/rapport_evaluation.json
-```
-
-## Adapter à un autre use case (hackathon)
-
-1. **LLM** : modifiez `services/chat_service.py` (SYSTEM_PROMPT, outils) et `llm_service.py`.
-2. **ML** : changez le dataset dans `config.py::DATASET_PATH` (ou `data/synthetique/`),
-   la cible dans `ml_service.py`, les features dans `ml_features.py`.
-3. **Règles** : éditez `knowledge_base/orientia_rules.pl` + `services/rules_fallback.py` (miroir).
-4. **RAG** : remplissez `data/sources/*.md` + `registre_sources.csv`.
-5. **Logique** : ajoutez un service + une route + un schéma (voir `docs/tutorials/implementation_example.md`).
-6. **Persistance** : SQLite par défaut (`DB_PATH`) ; autre base = un repository respectant `repositories/base.py`.
+**Tests** : le plus simple est `./pony test` (pytest backend **70 tests** + vitest + lint + build).

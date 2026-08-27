@@ -69,13 +69,17 @@ SYSTEM_PROMPT = (
     "d'admission relève de la commission pédagogique.\n"
     "4. Pour te renseigner sur l'offre de formation, appelle rechercher_docs et "
     "CITE tes sources (titre, origine, date, statut).\n"
-    "5. Pour comparer deux parcours, appelle comparer_parcours ; pour vérifier "
-    "l'éligibilité, appelle verifier_prerequis.\n"
+    "5. Pour comparer deux parcours, appelle impérativement comparer_parcours ET rechercher_docs (RAG) "
+    "afin de combiner les règles/prérequis de Prolog avec les détails de la base de connaissances.\n"
     "6. Si le modèle ML n'est pas disponible, dis-le honnêtement et base la "
     "recommandation uniquement sur les règles de compatibilité.\n"
     "7. Ne JAMAIS inventer d'information : si tu ne sais pas, dis 'je ne sais pas'.\n"
     "8. Ce système est une aide à la décision, PAS une décision officielle "
-    "d'admission.\n\n"
+    "d'admission.\n"
+    "9. RESTRICTIONS STRICTES DE BACCALAURÉAT : Respecte scrupuleusement l'éligibilité des filières :\n"
+    "   - Les filières informatiques (ESII, ISAIA, IMTICIA, IGGLIA) et de génie industriel (EMII, GCA, ICMP, IAA, PIP, AEE) sont STRICTEMENT réservées aux séries Scientifiques (C, D, S). Seule la filière IGGLIA accepte également la série Économique (OSE).\n"
+    "   - Les séries Littéraires (A1, A2, L) n'ont accès QU'AUX parcours de commerce (CAA), droit (DTJA), tourisme (TEE), et hôtellerie (TEH).\n"
+    "   - Si un candidat de série littéraire (A1, A2, L) te dit qu'il veut faire de l'informatique ou du génie industriel, tu dois immédiatement lui expliquer poliment que ces parcours sont réservés aux bacheliers scientifiques (ou économiques pour IGGLIA), mais que tu peux l'aider à s'orienter parmi les filières qui lui sont autorisées (CAA, DTJA, TEE, TEH). Ne continue pas à l'interroger sur des matières scientifiques ou prérequis pour l'informatique.\n\n"
     "REFUS OBLIGATOIRES :\n"
     "- Refuse poliment toute demande qui s'appuie sur des critères discriminatoires "
     "(sexe, âge, origine, religion, situation familiale) pour orienter ou classer.\n"
@@ -362,6 +366,7 @@ def chat_turn(
     # Payloads structurés capturés par les outils (pour le frontend)
     last_question: dict = {"payload": None}
     last_recommendation: dict = {"payload": None}
+    last_comparison: dict = {"payload": None}
 
     # Outils en closures (le SDK appelle ces fonctions automatiquement)
     def rechercher_docs(query: str) -> dict:
@@ -378,9 +383,11 @@ def chat_turn(
 
     def comparer_parcours(parcours_a: str, parcours_b: str) -> dict:
         outils_utilises.append("comparer_parcours")
-        return _outil_comparer_parcours(
+        result = _outil_comparer_parcours(
             {"parcours_a": parcours_a, "parcours_b": parcours_b}, session_id
         )
+        last_comparison["payload"] = result
+        return result
 
     def verifier_prerequis(parcours: str) -> dict:
         outils_utilises.append("verifier_prerequis")
@@ -423,6 +430,8 @@ def chat_turn(
             "tools_used": outils_utilises,
             "question": None,
             "recommendation": None,
+            "comparison": None,
+            "termine": False,
         }
 
     reply = (response.text or "").strip()
@@ -433,5 +442,6 @@ def chat_turn(
         "tools_used": outils_utilises,
         "question": last_question["payload"],
         "recommendation": recommendation,
+        "comparison": last_comparison["payload"],
         "termine": recommendation is not None,
     }
