@@ -33,3 +33,29 @@ id_repondant,statut,genre,serie_bac,parcours_ispm,score_satisfaction,poste_actue
 32,etudiant_ispm,femme,D,ISAIA,5.0,,1,1,1,0,0,0,1,0,1,0
 33,etudiant_ispm,homme,Technologie Générale Industrielle,ICMP,5.0,,1,1,1,1,1,1,1,1,1,1
 34,professionnel,homme,,,,,1,1,1,1,1,1,1,1,1,1
+35,etudiant_ispm,femme,A2,DTJA,5.0,,1,1,1,1,1,1,1,1,1,0
+36,etudiant_ispm,homme,D,IMTICIA,4.0,,1,1,1,1,1,1,1,0,1,0
+37,professionnel,femme,,,,Consultant en developpement,1,1,1,1,1,1,1,1,1,1
+38,professionnel,homme,,,,,0,0,0,0,0,0,0,0,0,0
+39,etudiant_ispm,femme,OSE,FIC,3.0,,0,0,0,0,1,1,0,1,0,1
+40,professionnel,homme,,,,Ingénieur en génie civil,0,0,1,0,0,0,1,0,0,0
+41,professionnel,homme,,,,,1,1,1,0,0,0,0,0,0,0
+42,professionnel,femme,,,,,0,0,0,0,1,1,1,1,1,0
+43,etudiant_ispm,homme,D,IGGLIA,2.0,,1,1,0,0,0,0,0,0,0,1
+44,etudiant_ispm,femme,A2,FIC,5.0,,0,0,0,0,1,1,1,0,1,0
+45,professionnel,homme,,,,,1,1,1,1,1,1,1,0,1,0
+46,etudiant_ispm,homme,A2,DTJA,3.0,,1,0,0,1,1,1,0,0,0,0
+47,professionnel,homme,,,,,1,0,0,0,0,0,0,0,0,0
+48,professionnel,femme,,,,Enseignante,1,1,1,1,1,1,1,1,1,1
+49,etudiant_ispm,femme,A2,DTJA,5.0,,1,1,1,1,1,1,1,1,1,0
+50,professionnel,homme,,,,DAF,1,1,1,1,1,1,1,1,1,0
+51,professionnel,femme,,,,Marketing,1,1,1,1,1,1,1,1,1,1
+52,etudiant_ispm,femme,A2,FIC,4.0,,0,0,0,0,1,1,1,0,0,1
+53,etudiant_ispm,femme,L,CAA,2.0,Assistante,0,0,0,0,1,1,1,0,0,1
+54,etudiant_ispm,femme,OSE,EMP,4.0,,0,0,0,0,1,1,1,0,0,0
+55,etudiant_ispm,femme,D,IAA,4.0,,1,1,1,1,1,1,1,1,1,0
+56,professionnel,homme,,,,,1,0,0,0,0,0,0,0,0,0
+57,etudiant_ispm,femme,D,TEH,5.0,,0,0,0,0,0,1,0,1,0,0
+58,professionnel,homme,,,,Chercher de Faille de securite,1,1,1,1,1,1,1,1,1,0
+59,etudiant_ispm,femme,D,IGGLIA,3.0,,1,0,1,1,1,1,1,1,1,1
+
